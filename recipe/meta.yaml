@@ -1,0 +1,166 @@
+{% set name = "docling" %}
+{% set version = "2.145.0" %}
+
+package:
+  # House linter rule (outputs_not_unique): the top-level package name must not
+  # collide with any output name; only the outputs below are built/published.
+  name: {{ name }}-split
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/d/docling-slim/docling_slim-{{ version }}.tar.gz
+  sha256: 252e09be828cc3ed246ce831af26b0a64a481db16c582d5f520141274c6c5a14
+
+build:
+  number: 0
+  # docling-slim requires-python: >=3.10,<4.0 (pyproject.toml at v2.145.0)
+  skip: true  # [py<310 or py>=400]
+
+requirements:
+  host:
+    - python
+
+outputs:
+  - name: docling-slim
+    script: "{{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation"
+    build:
+      entry_points:
+        - docling = docling.cli.main:app
+        - docling-tools = docling.cli.tools:app
+    requirements:
+      host:
+        - python
+        - pip
+        - hatchling
+      run:
+        # Minimal base dependencies (pyproject.toml [project] dependencies)
+        - python
+        - pydantic >=2.0.0,<3.0.0
+        - docling-core >=2.103.1,<3.0.0
+        - pydantic-settings >=2.3.0,<3.0.0
+        - filetype >=1.2.0,<2.0.0
+        - requests >=2.32.2,<3.0.0
+        - certifi >=2024.7.4
+        - pluggy >=1.0.0,<2.0.0
+        - tqdm >=4.65.0,<5.0.0
+        - langcodes >=3.5.0,<4.0.0
+    test:
+      requires:
+        - pip
+        # docling-core's transforms.chunker package imports huggingface_hub eagerly
+        # at import time; it is docling-core[chunking] territory, not a docling-slim
+        # run dep, but the import smoke test below needs it present.
+        - huggingface_hub
+        # Chunking integration proof: docling-core's chunker package imports
+        # tree_sitter at import time; the grammar packages prove the full
+        # tree-sitter chain resolves and loads (staging channels in abs.yaml).
+        - tree_sitter
+        - tree-sitter-python
+        - tree-sitter-c
+        - tree-sitter-javascript
+        - tree-sitter-typescript
+      imports:
+        - docling
+      files:
+        - test/run_slim_test.py
+      commands:
+        - pip check
+        - python test/run_slim_test.py
+
+  # docling is a metapackage equivalent to pip's `docling-slim[standard]` extra.
+  # The run list below is the flattened [project.optional-dependencies].standard
+  # from the upstream pyproject.toml at tag v2.145.0 (format-pdf + models-local +
+  # feat-ocr-rapidocr + format-office + format-web + format-latex + format-email +
+  # format-iwork + extract-core + service-client + cli; feat-chunking is
+  # deliberately NOT flattened: its tree-sitter chain is exercised by the test
+  # suite via staging channels, not forced on every install).
+  - name: docling
+    requirements:
+      host:
+        - python
+        # House linter rules (missing_python_build_tool, cbc_dep_in_run_missing_from_host):
+        # the metapackage needs a build tool in host and CBC-listed run deps
+        # mirrored in host for correct variant pinning.
+        - pip
+        - pytorch {{ pytorch }}
+      run:
+        - python
+        - {{ pin_subpackage('docling-slim', exact=True) }}
+        # models-local
+        - docling-ibm-models >=4.0.2,<5
+        - pytorch >=2.2.2,<3.0.0
+        - torchvision >=0,<1
+        - accelerate >=1.0.0,<2
+        - huggingface_hub >=0.23,<3
+        - defusedxml >=0.7.1,<0.8.0
+        # format-pdf (pypdfium2 + docling-parse backends)
+        - pypdfium2 >=4.30.0,!=4.30.1,<6.0.0
+        - docling-parse >=7.22.2,<8.0.0
+        # convert-core (+ extract-core)
+        - numpy >=1.24.0,<3.0.0
+        - pillow >=10.0.0,<14.0.0
+        - rtree >=1.3.0,<2.0.0
+        - scipy >=1.9.0,<2.0.0
+        - polyfactory >=2.22.2
+        # feat-ocr-rapidocr
+        - rapidocr >=3.9.1,<4.0.0
+        # format-office
+        - python-docx >=1.2.0,<2.0.0
+        - python-pptx >=1.0.2,<2.0.0
+        - openpyxl >=3.1.5,<4.0.0
+        - pylatexenc >=2.10,<3.0
+        # format-web
+        - beautifulsoup4 >=4.12.3,<5.0.0
+        - marko >=2.1.2,<3.0.0
+        # format-email
+        - mail-parser >=4.1.4,<5.0.0
+        - python-oxmsg >=0.0.2,<0.1.0
+        # service-client + cli
+        - httpx >=0.28,<1.0.0
+        - websockets >=14.0,<18.0
+        - typer >=0.19.0,<0.28.0
+        - rich >=13.0.0
+        - python-dotenv >=1.0,<2
+      run_constrained:
+        # Optional-feature constraints (upstream extras), soft if-installed bounds:
+        # tesserocr <- feat-ocr-tesserocr; onnxruntime <- feat-ocr-rapidocr-onnx
+        # (per-python bounds preserved); transformers <- models-vlm-inline
+        # (macOS excludes the 5.9-5.15 MPS-broken window, per upstream comment).
+        # All other upstream extras are unbounded in this set or are covered by the
+        # run list above; the `all`/format-*/models-* bundle extras are not
+        # represented as a package-wide constraint.
+        - tesserocr >=2.7.1,<3.0.0
+        - onnxruntime >=1.7.0,<1.24  # [py<311]
+        - onnxruntime >=1.7.0,<2.0.0  # [py>=311 and py<314]
+        - onnxruntime >=1.24.1,<2.0.0  # [py>=314]
+        - transformers >=4.42.0,<6.0.0,!=5.0.*,!=5.1.*,!=5.2.*,!=5.3.*,!=5.9.*,!=5.10.*,!=5.11.*,!=5.12.*,!=5.13.*,!=5.14.*,!=5.15.*  # [osx]
+        - transformers >=4.42.0,<6.0.0,!=5.0.*,!=5.1.*,!=5.2.*,!=5.3.*,!=5.13.0  # [not osx]
+    test:
+      requires:
+        - pip
+      imports:
+        - docling
+      files:
+        - test/run_docling_test.py
+      commands:
+        - pip check
+        - docling --help
+        - docling-tools --help
+        - python test/run_docling_test.py
+
+about:
+  home: https://github.com/docling-project/docling
+  doc_url: https://docling-project.github.io/docling
+  dev_url: https://github.com/docling-project/docling
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: "Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML, and more, to a unified document representation for powering downstream workflows such as gen AI applications."
+  description: >
+    Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML,
+    and more, to a unified document representation for powering downstream workflows
+    such as gen AI applications.
+
+extra:
+  recipe-maintainers:
+    - kklein

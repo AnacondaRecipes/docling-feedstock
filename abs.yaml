@@ -1,0 +1,20 @@
+# Staging channels (graph-as-a-channel on the internal host) for packages not
+# yet on pkgs/main. REMOVE ALL of these before merge -- a PR must never merge
+# with staging channels in source channels.
+# Each graph verified all-green via `pbp graph fetch` on 2026-11-06:
+#   docling-core-feedstock PR #1 (prepare 2.105.0): 98/98 tasks completed
+#   tree-sitter-feedstock: 79/79
+#   tree-sitter-python-feedstock PR #1 @ 26cc9cb: 79/79
+#   tree-sitter-c-feedstock PR #1 @ f34da61: 79/79
+#   tree-sitter-javascript-feedstock PR #1 @ 843e67d: 79/79
+#   tree-sitter-typescript-feedstock PR #1 @ 77f2519: 79/79
+#   docling-parse-feedstock PR #1 @ 5312880c (user-fixed head): 79/79 (2026-11-09)
+channels:
+  - defaults
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/ca3183a7-0bb4-4da4-b772-04a538a3775a  # docling-parse
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/747b0995-e2c4-4f0e-be6e-d7229ffb3722  # docling-core
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/3daff2fa-5f98-4e89-82ea-a3980245cdfe  # tree_sitter
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/5f9ef92e-2a4c-4ba9-aad4-daa6434bff95  # tree-sitter-python
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/b326ab3e-c7c3-4fc5-98ec-0a645b91db85  # tree-sitter-c
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/213d7529-9510-4f07-b54f-8c8b262ebcc8  # tree-sitter-javascript
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/987a7cba-01b0-4ac1-9d60-1ca4dbe747fe  # tree-sitter-typescript
