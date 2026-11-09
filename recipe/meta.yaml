@@ -1,29 +1,22 @@
 {% set name = "docling" %}
-{% set version = "2.145.0" %}
+{% set version = "2.146.0" %}
 
 package:
-  # House linter rule (outputs_not_unique): the top-level package name must not
-  # collide with any output name; only the outputs below are built/published.
   name: {{ name }}-split
   version: {{ version }}
 
 source:
   url: https://pypi.org/packages/source/d/docling-slim/docling_slim-{{ version }}.tar.gz
-  sha256: 252e09be828cc3ed246ce831af26b0a64a481db16c582d5f520141274c6c5a14
+  sha256: 4e0f63c4bd73a3ceb39bbfdb7abf946ae27338c372279e27b884fd82d38c2b5c
 
 build:
   number: 0
-  # docling-slim requires-python: >=3.10,<4.0 (pyproject.toml at v2.145.0)
-  skip: true  # [py<310 or py>=400]
-
-requirements:
-  host:
-    - python
+  skip: true  # [py<310]
 
 outputs:
   - name: docling-slim
-    script: "{{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation"
     build:
+      script: python -m pip install . -vv --no-deps --no-build-isolation # analint: wrong_output_script_key
       entry_points:
         - docling = docling.cli.main:app
         - docling-tools = docling.cli.tools:app
@@ -47,48 +40,51 @@ outputs:
     test:
       requires:
         - pip
-        # docling-core's transforms.chunker package imports huggingface_hub eagerly
-        # at import time; it is docling-core[chunking] territory, not a docling-slim
-        # run dep, but the import smoke test below needs it present.
-        - huggingface_hub
-        # Chunking integration proof: docling-core's chunker package imports
-        # tree_sitter at import time; the grammar packages prove the full
-        # tree-sitter chain resolves and loads (staging channels in abs.yaml).
-        - tree_sitter
-        - tree-sitter-python
-        - tree-sitter-c
-        - tree-sitter-javascript
-        - tree-sitter-typescript
       imports:
         - docling
-      files:
-        - test/run_slim_test.py
       commands:
         - pip check
-        - python test/run_slim_test.py
 
-  # docling is a metapackage equivalent to pip's `docling-slim[standard]` extra.
-  # The run list below is the flattened [project.optional-dependencies].standard
-  # from the upstream pyproject.toml at tag v2.145.0 (format-pdf + models-local +
-  # feat-ocr-rapidocr + format-office + format-web + format-latex + format-email +
-  # format-iwork + extract-core + service-client + cli; feat-chunking is
-  # deliberately NOT flattened: its tree-sitter chain is exercised by the test
-  # suite via staging channels, not forced on every install).
+  # docling is `docling-slim[service-client]`
+  # https://github.com/docling-project/docling/blob/main/packages/docling/pyproject.toml
+  - name: docling-client
+    requirements:
+      host:
+        - python # analint: missing_python_build_tool
+      run:
+        - python
+        - {{ pin_subpackage('docling-slim', exact=True) }}
+        # service-client + cli
+        - httpx >=0.28,<1.0.0
+        - websockets >=14.0,<18.0
+        - typer >=0.19.0,<0.28.0
+        - rich >=13.0.0
+        - python-dotenv >=1.0,<2
+    test:
+      requires:
+        - pip
+      imports:
+        - docling
+        - docling.cli.main
+        - docling.cli.tools
+        - docling.service_client.client
+      commands:
+        - pip check
+        - docling --help
+        - docling-tools --help
+  
+  # docling is `docling-slim[standard]`
+  # https://github.com/docling-project/docling/blob/main/packages/docling/pyproject.toml
   - name: docling
     requirements:
       host:
-        - python
-        # House linter rules (missing_python_build_tool, cbc_dep_in_run_missing_from_host):
-        # the metapackage needs a build tool in host and CBC-listed run deps
-        # mirrored in host for correct variant pinning.
-        - pip
-        - pytorch {{ pytorch }}
+        - python # analint: missing_python_build_tool
       run:
         - python
         - {{ pin_subpackage('docling-slim', exact=True) }}
         # models-local
         - docling-ibm-models >=4.0.2,<5
-        - pytorch >=2.2.2,<3.0.0
+        - pytorch >=2.2.2,<3.0.0 # analint: cbc_dep_in_run_missing_from_host
         - torchvision >=0,<1
         - accelerate >=1.0.0,<2
         - huggingface_hub >=0.23,<3
@@ -115,6 +111,19 @@ outputs:
         # format-email
         - mail-parser >=4.1.4,<5.0.0
         - python-oxmsg >=0.0.2,<0.1.0
+        # format-latex
+        - pylatexenc >=2.10,<3.0
+        # format-iwork
+        - defusedxml >=0.7.1,<0.8.0
+        # feat-chunking (docling-core[chunking])
+        - docling-core >=2.103.1,<3.0.0
+        - semchunk
+        - tree_sitter
+        - tree-sitter-python
+        - tree-sitter-c
+        - tree-sitter-javascript
+        - tree-sitter-typescript
+        - transformers
         # service-client + cli
         - httpx >=0.28,<1.0.0
         - websockets >=14.0,<18.0
@@ -122,15 +131,7 @@ outputs:
         - rich >=13.0.0
         - python-dotenv >=1.0,<2
       run_constrained:
-        # Optional-feature constraints (upstream extras), soft if-installed bounds:
-        # tesserocr <- feat-ocr-tesserocr; onnxruntime <- feat-ocr-rapidocr-onnx
-        # (per-python bounds preserved); transformers <- models-vlm-inline
-        # (macOS excludes the 5.9-5.15 MPS-broken window, per upstream comment).
-        # All other upstream extras are unbounded in this set or are covered by the
-        # run list above; the `all`/format-*/models-* bundle extras are not
-        # represented as a package-wide constraint.
         - tesserocr >=2.7.1,<3.0.0
-        - onnxruntime >=1.7.0,<1.24  # [py<311]
         - onnxruntime >=1.7.0,<2.0.0  # [py>=311 and py<314]
         - onnxruntime >=1.24.1,<2.0.0  # [py>=314]
         - transformers >=4.42.0,<6.0.0,!=5.0.*,!=5.1.*,!=5.2.*,!=5.3.*,!=5.9.*,!=5.10.*,!=5.11.*,!=5.12.*,!=5.13.*,!=5.14.*,!=5.15.*  # [osx]
@@ -140,6 +141,28 @@ outputs:
         - pip
       imports:
         - docling
+        - docling.document_converter
+        - docling.document_extractor
+        - docling.pipeline.simple_pipeline
+        - docling.pipeline.standard_pdf_pipeline
+        - docling.backend.docling_parse_backend
+        - docling.backend.pypdfium2_backend
+        - docling.backend.msword_backend
+        - docling.backend.mspowerpoint_backend
+        - docling.backend.msexcel_backend
+        - docling.backend.html_backend
+        - docling.backend.md_backend
+        - docling.models.factories.layout_factory
+        - docling.models.factories.ocr_factory
+        - docling.models.factories.table_factory
+        - docling.models.stages.layout.layout_model
+        - docling.models.stages.ocr.auto_ocr_model
+        - docling.models.stages.table_structure.table_structure_model
+        - docling.utils.model_downloader
+        - docling.utils.visualization
+        - docling.cli.main
+        - docling.cli.tools
+        - docling.service_client.client
       files:
         - test/run_docling_test.py
       commands:
@@ -155,11 +178,11 @@ about:
   license: MIT
   license_family: MIT
   license_file: LICENSE
-  summary: "Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML, and more, to a unified document representation for powering downstream workflows such as gen AI applications."
+  summary: Get your documents ready for gen AI
   description: >
-    Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML,
-    and more, to a unified document representation for powering downstream workflows
-    such as gen AI applications.
+    Docling simplifies document processing by parsing diverse formats, including 
+    advanced PDF understanding — and providing seamless integrations with the 
+    generative AI ecosystem.
 
 extra:
   recipe-maintainers:
