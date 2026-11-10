@@ -1,11 +1,11 @@
 channels:
   # docling-parse PR#1 (docling-parse 7.24.2)
-  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/ca3183a7-0bb4-4da4-b772-04a538a3775a
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/6a9473e9-d3ec-41d1-8431-2d379aa5574c
   # loguru-cpp-feedstock PR#1 (loguru-cpp 2.2.0)
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/c2672e2c-942c-42cd-9458-2baae806e39a
   # blend2d-feedstock PR#1 (blend2d 0.21.2)
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/74c11839-1263-4b63-91e9-441ca956afa4
   # polyfactory PR#4 (3.5.0)
-  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/c0c0c584-daf9-401f-a89e-518ddca2db80
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/e13a522d-1cc6-4561-b683-52c2ebf8a7e0
   # pypdfium2 PR#10 (win-arm64 build)
-  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/9a914c8b-9955-4f50-b69c-05e62a4fdb22
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/4ed3663f-14c4-4c7c-8bca-2c3fb4feaef6
