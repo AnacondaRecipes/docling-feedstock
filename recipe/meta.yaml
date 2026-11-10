@@ -17,6 +17,8 @@ source:
   - url: https://pypi.org/packages/source/d/docling/docling-{{ version }}.tar.gz
     sha256: acd3f1901afbb4bf22183e036c6794e7b5fb01c5f3d273b2631c747d49f6b3eb
     folder: docling
+    patches:
+      - patches/docling-drop-redeclared-entry-points.patch
 
 build:
   number: 0

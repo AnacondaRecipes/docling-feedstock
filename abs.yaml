@@ -1,6 +1,8 @@
 channels:
   # docling-parse PR#1 (docling-parse 7.24.2)
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/6a9473e9-d3ec-41d1-8431-2d379aa5574c
+  # missing win-arm64 packages
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/d7766104-730a-4f9c-9910-ee146fca0598
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/ed835e13-850e-4114-a71f-abd5a531a00e
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/39c72c9b-df08-479f-8ada-92843d9eb899
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/cb90fca8-920e-4c09-9db6-ed173ebe1b6c
