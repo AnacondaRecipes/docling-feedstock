@@ -23,6 +23,22 @@ with tempfile.TemporaryDirectory() as tmp:
     assert "docling" in md_out, "markdown round-trip lost content"
     print(f"pipeline: converted md -> {len(converted.texts)} text items")
 
+# HierarchicalChunker does not load a pretrained tokenizer or model.
+from docling.chunking import HierarchicalChunker
+from docling_core.types.doc import DoclingDocument, DocItemLabel
+
+document = DoclingDocument(name="chunking-smoke")
+document.add_heading(text="Title", level=1)
+document.add_text(label=DocItemLabel.TEXT, text="Hello docling chunking")
+chunks = list(HierarchicalChunker().chunk(document))
+assert chunks, "hierarchical chunking produced no chunks"
+assert any(
+    "Hello docling chunking" in chunk.text
+    and "Title" in (chunk.meta.headings or [])
+    for chunk in chunks
+), "hierarchical chunking lost text or heading metadata"
+print(f"chunking: produced {len(chunks)} chunks with heading metadata")
+
 # office extras: build DOCX/XLSX in memory (no fixtures) and convert
 from docx import Document
 from openpyxl import Workbook
