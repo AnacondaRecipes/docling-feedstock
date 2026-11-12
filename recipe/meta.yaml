@@ -134,6 +134,8 @@ outputs:
         - docling.datamodel.settings
         - docling.utils.text_decoding
         - docling.utils.utils
+      files:
+        - test/run_docling_slim_test.py
       commands:
         - pip check
         - python test/run_docling_slim_test.py
@@ -165,6 +167,8 @@ outputs:
         - docling.cli.main
         - docling.cli.tools
         - docling.service_client.client
+      files:
+        - test/run_docling_client_test.py
       commands:
         - pip check
         - docling --help
