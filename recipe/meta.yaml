@@ -115,7 +115,8 @@ outputs:
         # models-remote
         - tritonclient >=2.65.0,<3.0.0
         # models-onnxruntime
-        - onnxruntime >=1.24.1,<2.0.0
+        - onnxruntime >=1.7.0,<2.0.0   # [py<314]
+        - onnxruntime >=1.24.1,<2.0.0  # [py>=314]
         # feat-ocr-easyocr
         - easyocr >=1.7,<2.0
         # feat-ocr-tesserocr
