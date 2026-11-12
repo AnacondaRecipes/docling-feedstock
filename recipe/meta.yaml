@@ -100,39 +100,7 @@ outputs:
         - pip check
         - docling --help
         - docling-tools --help
-        # Mock transport exercises the SDK without an external service or local models.
-        - >-
-          python -c "exec('''import httpx
-          \nfrom docling_core.types.doc import DoclingDocument, DocItemLabel
-          \nfrom docling.datamodel.base_models import ConversionStatus
-          \nfrom docling.datamodel.service.targets import InBodyTarget
-          \nfrom docling.service_client import DoclingServiceClient
-          \ndocument = DoclingDocument(name='remote-smoke')
-          \ndocument.add_text(label=DocItemLabel.TEXT, text='Hello docling client')
-          \nrequests = []
-          \ndef handler(request):
-          \n    requests.append((request.method, request.url.path))
-          \n    if request.method == 'POST' and request.url.path == '/v1/convert/source/async':
-          \n        assert b'https://example.org/test.pdf' in request.content
-          \n        return httpx.Response(200, json={'task_id': 'smoke', 'task_type': 'convert', 'task_status': 'pending', 'task_position': 0, 'task_meta': None, 'error_message': None})
-          \n    if request.method == 'GET' and request.url.path == '/v1/status/poll/smoke':
-          \n        return httpx.Response(200, json={'task_id': 'smoke', 'task_type': 'convert', 'task_status': 'success', 'task_position': 0, 'task_meta': None, 'error_message': None})
-          \n    if request.method == 'GET' and request.url.path == '/v1/result/smoke':
-          \n        return httpx.Response(200, json={'status': 'success', 'processing_time': 0.0, 'document': {'filename': 'test.pdf', 'json_content': document.model_dump(mode='json')}})
-          \n    raise AssertionError(f'Unexpected request: {request.method} {request.url}')
-          \nwith DoclingServiceClient(url='https://docling-service.invalid', status_watcher='polling') as client:
-          \n    client._http_client.close()
-          \n    client._http_client = httpx.Client(transport=httpx.MockTransport(handler))
-          \n    job = client.submit('https://example.org/test.pdf', target=InBodyTarget())
-          \n    assert job.task_id == 'smoke'
-          \n    assert job.poll().task_status == 'success'
-          \n    result = job.result()
-          \n    assert result.status == ConversionStatus.SUCCESS
-          \n    assert 'Hello docling client' in result.document.export_to_markdown()
-          \nassert ('POST', '/v1/convert/source/async') in requests
-          \nassert ('GET', '/v1/status/poll/smoke') in requests
-          \nassert ('GET', '/v1/result/smoke') in requests
-          \nprint('client: submitted, polled and decoded a document offline')''')"
+        - python test/run_docling_client_test.py
   
   # docling is `docling-slim[standard]`
   # https://github.com/docling-project/docling/blob/main/packages/docling/pyproject.toml
